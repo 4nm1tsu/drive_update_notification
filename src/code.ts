@@ -53,8 +53,8 @@ function doPost(e: GoogleAppsScript.Events.DoPost) {
                 item.file &&
                 item.file.mimeType !== 'application/vnd.google-apps.folder' &&
                 getRootDirId(item.file?.id) === properties.getProperty("FOLDER_ID") &&
-                item.file?.labels?.viewed == false &&
-                item.file?.labels?.starred == false,
+                item.file?.labels?.viewed || false === false &&
+                item.file?.labels?.starred || false === false,
             )
             .map((item) => {
               return [
