@@ -51,10 +51,11 @@ function doPost(e: GoogleAppsScript.Events.DoPost) {
             .filter(
               (item) =>
                 item.file &&
-                item.file.mimeType !== 'application/vnd.google-apps.folder' &&
-                getRootDirId(item.file?.id) === properties.getProperty("FOLDER_ID") &&
-                (item.file?.labels?.viewed ?? false) === false &&
-                (item.file?.labels?.starred ?? false) === false,
+                item.file?.mimeType === 'application/pdf' &&
+                getRootDirId(item.file?.id) === properties.getProperty("FOLDER_ID")
+              // TODO: 閲覧を弾きたい
+              //(item.file?.labels?.viewed ?? undefined) === false
+              //(item.file?.labels?.starred ?? false) === false
             )
             .map((item) => {
               return [
