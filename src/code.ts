@@ -59,7 +59,7 @@ function doPost(e: GoogleAppsScript.Events.DoPost) {
             .map((item) => {
               return [
                 item.file?.title,
-                item.file?.labels?.trashed ? 'trashed' : ''
+                item.file?.labels?.trashed ? ' trashed' : ''
               ]
             })
           notify(items)
