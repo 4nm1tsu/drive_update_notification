@@ -1,6 +1,6 @@
 function notify(content: (string | undefined)[][]) {
   const properties = PropertiesService.getScriptProperties()
-  const discordWebHookUrl = properties.getProperty("DISCORD_WEBHOOK_URL") || ""
+  const discordWebHookUrl = properties.getProperty("DISCORD_WEBHOOK_URL") ?? ""
 
   const message = {
     "content": content.reduce(function (acc, cur) {
@@ -22,7 +22,7 @@ function getRootDirId(id) {
   let currentId = id
   let parents
   try {
-    parents = Drive.Files?.get(currentId).parents || []
+    parents = Drive.Files?.get(currentId).parents ?? []
   } catch (e: any) {
     parents = []
     console.log(e)
@@ -30,7 +30,7 @@ function getRootDirId(id) {
 
   while (parents.length) {
     currentId = parents[0].id
-    parents = Drive.Files?.get(currentId).parents || []
+    parents = Drive.Files?.get(currentId).parents ?? []
   }
   return currentId
 }
@@ -53,8 +53,8 @@ function doPost(e: GoogleAppsScript.Events.DoPost) {
                 item.file &&
                 item.file.mimeType !== 'application/vnd.google-apps.folder' &&
                 getRootDirId(item.file?.id) === properties.getProperty("FOLDER_ID") &&
-                item.file?.labels?.viewed || false === false &&
-                item.file?.labels?.starred || false === false,
+                (item.file?.labels?.viewed ?? false) === false &&
+                (item.file?.labels?.starred ?? false) === false,
             )
             .map((item) => {
               return [
@@ -65,7 +65,7 @@ function doPost(e: GoogleAppsScript.Events.DoPost) {
           notify(items)
         }
 
-        properties.setProperty('PAGE_TOKEN', res?.newStartPageToken || '')
+        properties.setProperty('PAGE_TOKEN', res?.newStartPageToken ?? '')
       } catch (e: any) {
         console.error(e)
       } finally {
@@ -82,7 +82,7 @@ function subscribe() {
     type: 'web_hook',
     token: '',
     expiration: `${new Date(Date.now() + 60 * 61 * 1000).getTime()}`,
-    address: properties.getProperty('ADDRESS') || ''
+    address: properties.getProperty('ADDRESS') ?? ''
   }
 
   const resToken = Drive.Changes?.getStartPageToken()
@@ -100,13 +100,13 @@ function subscribe() {
   }
 
   properties.setProperty('CHANNEL_ID', resource.id)
-  properties.setProperty('RESOURCE_ID', res?.resourceId || '')
+  properties.setProperty('RESOURCE_ID', res?.resourceId ?? '')
 }
 
 function unsubscribe() {
   const properties = PropertiesService.getScriptProperties()
-  const id = properties.getProperty('CHANNEL_ID') || ''
-  const resourceId = properties.getProperty('RESOURCE_ID') || ''
+  const id = properties.getProperty('CHANNEL_ID') ?? ''
+  const resourceId = properties.getProperty('RESOURCE_ID') ?? ''
 
   if (id && resourceId) {
     Drive.Channels?.stop({
