@@ -1,58 +1,61 @@
 function notify(content: (string | undefined)[][]) {
-  const properties = PropertiesService.getScriptProperties()
-  const discordWebHookUrl = properties.getProperty("DISCORD_WEBHOOK_URL") ?? ""
+  const properties = PropertiesService.getScriptProperties();
+  const discordWebHookUrl = properties.getProperty("DISCORD_WEBHOOK_URL") ?? "";
 
   const message = {
-    "content": content.reduce(function (acc, cur) {
-      return [...acc, ...cur];
-    }).join("")
+    content: content
+      .reduce(function (acc, cur) {
+        return [...acc, ...cur];
+      })
+      .join(""),
   };
 
   const param: GoogleAppsScript.URL_Fetch.URLFetchRequestOptions = {
-    "method": "post",
-    "headers": {
-      "Content-type": "application/json"
+    method: "post",
+    headers: {
+      "Content-type": "application/json",
     },
-    "payload": JSON.stringify(message)
-  }
-  UrlFetchApp.fetch(discordWebHookUrl, param)
+    payload: JSON.stringify(message),
+  };
+  UrlFetchApp.fetch(discordWebHookUrl, param);
 }
 
 function getRootDirId(id) {
-  let currentId = id
-  let parents
+  let currentId = id;
+  let parents;
   try {
-    parents = Drive.Files?.get(currentId).parents ?? []
+    parents = Drive.Files?.get(currentId).parents ?? [];
   } catch (e: any) {
-    parents = []
-    console.log(e)
+    parents = [];
+    console.log(e);
   }
 
   while (parents.length) {
-    currentId = parents[0].id
-    parents = Drive.Files?.get(currentId).parents ?? []
+    currentId = parents[0].id;
+    parents = Drive.Files?.get(currentId).parents ?? [];
   }
-  return currentId
+  return currentId;
 }
 
 function doGet(e: GoogleAppsScript.Events.DoGet) {}
 function doPost(e: GoogleAppsScript.Events.DoPost) {
   if (e.postData && e.postData.contents) {
-    const lock = LockService.getScriptLock()
+    const lock = LockService.getScriptLock();
     if (lock.tryLock(10 * 1000)) {
       try {
-        const properties = PropertiesService.getScriptProperties()
-        const pageToken = properties.getProperty('PAGE_TOKEN')
-        const res = Drive.Changes?.list({pageToken})
-        console.log(JSON.stringify(res))
+        const properties = PropertiesService.getScriptProperties();
+        const pageToken = properties.getProperty("PAGE_TOKEN");
+        const res = Drive.Changes?.list({ pageToken });
+        console.log(JSON.stringify(res));
 
         if (res?.items) {
           const items = res.items
             .filter(
               (item) =>
                 item.file &&
-                item.file?.mimeType === 'application/pdf' &&
-                getRootDirId(item.file?.id) === properties.getProperty("FOLDER_ID")
+                item.file?.mimeType === "application/pdf" &&
+                getRootDirId(item.file?.id) ===
+                  properties.getProperty("FOLDER_ID")
               // TODO: 閲覧を弾きたい
               //(item.file?.labels?.viewed ?? undefined) === false
               //(item.file?.labels?.starred ?? false) === false
@@ -60,61 +63,61 @@ function doPost(e: GoogleAppsScript.Events.DoPost) {
             .map((item) => {
               return [
                 item.file?.title,
-                item.file?.labels?.trashed ? ' trashed' : ''
-              ]
-            })
+                item.file?.labels?.trashed ? " trashed" : "",
+              ];
+            });
           if (items.join().length) {
-            notify(items)
+            notify(items);
           }
         }
 
-        properties.setProperty('PAGE_TOKEN', res?.newStartPageToken ?? '')
+        properties.setProperty("PAGE_TOKEN", res?.newStartPageToken ?? "");
       } catch (e: any) {
-        console.error(e)
+        console.error(e);
       } finally {
-        lock.releaseLock()
+        lock.releaseLock();
       }
     }
   }
 }
 
 function subscribe() {
-  const properties = PropertiesService.getScriptProperties()
+  const properties = PropertiesService.getScriptProperties();
   const resource = {
     id: Utilities.getUuid(),
-    type: 'web_hook',
-    token: '',
+    type: "web_hook",
+    token: "",
     expiration: `${new Date(Date.now() + 60 * 61 * 1000).getTime()}`,
-    address: properties.getProperty('ADDRESS') ?? ''
-  }
+    address: properties.getProperty("ADDRESS") ?? "",
+  };
 
-  const resToken = Drive.Changes?.getStartPageToken()
-  const pageToken = JSON.parse(resToken as string).startPageToken
-  properties.setProperty('PAGE_TOKEN', pageToken)
+  const resToken = Drive.Changes?.getStartPageToken();
+  const pageToken = JSON.parse(resToken as string).startPageToken;
+  properties.setProperty("PAGE_TOKEN", pageToken);
 
   //const res = Drive.Files?.watch(resource, "")
-  const res = Drive.Changes?.watch(resource)
-  console.log(res)
+  const res = Drive.Changes?.watch(resource);
+  console.log(res);
 
   try {
-    unsubscribe()
+    unsubscribe();
   } catch (e: any) {
-    console.error(e)
+    console.error(e);
   }
 
-  properties.setProperty('CHANNEL_ID', resource.id)
-  properties.setProperty('RESOURCE_ID', res?.resourceId ?? '')
+  properties.setProperty("CHANNEL_ID", resource.id);
+  properties.setProperty("RESOURCE_ID", res?.resourceId ?? "");
 }
 
 function unsubscribe() {
-  const properties = PropertiesService.getScriptProperties()
-  const id = properties.getProperty('CHANNEL_ID') ?? ''
-  const resourceId = properties.getProperty('RESOURCE_ID') ?? ''
+  const properties = PropertiesService.getScriptProperties();
+  const id = properties.getProperty("CHANNEL_ID") ?? "";
+  const resourceId = properties.getProperty("RESOURCE_ID") ?? "";
 
   if (id && resourceId) {
     Drive.Channels?.stop({
       id,
-      resourceId
-    })
+      resourceId,
+    });
   }
 }
