@@ -63,7 +63,9 @@ function doPost(e: GoogleAppsScript.Events.DoPost) {
                 item.file?.labels?.trashed ? ' trashed' : ''
               ]
             })
-          notify(items)
+          if (items.join().length) {
+            notify(items)
+          }
         }
 
         properties.setProperty('PAGE_TOKEN', res?.newStartPageToken ?? '')
