@@ -53,7 +53,8 @@ function doPost(e: GoogleAppsScript.Events.DoPost) {
             .filter(
               (item) =>
                 item.file &&
-                item.file?.mimeType === "application/pdf" &&
+                (item.file?.mimeType === "application/pdf" ||
+                item.file?.mimeType === "application/epub+zip") &&
                 getRootDirId(item.file?.id) ===
                   properties.getProperty("FOLDER_ID")
               // TODO: 閲覧を弾きたい
